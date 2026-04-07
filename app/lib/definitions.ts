@@ -86,3 +86,13 @@ export type InvoiceForm = {
   amount: number;
   status: 'pending' | 'paid';
 };
+
+/* Inventory types */
+export type InventoryTable = {
+  id: string;
+  sku: string;
+  name: string;
+  description: string;
+  status: 'available' | 'out_of_stock';
+  img: string;
+};
