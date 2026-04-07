@@ -2,12 +2,14 @@ import postgres from 'postgres';
 import {
   CustomerField,
   CustomersTableType,
+  InventoryTable,
   InvoiceForm,
   InvoicesTable,
   LatestInvoiceRaw,
   Revenue,
 } from './definitions';
 import { formatCurrency } from './utils';
+import { invoices } from './placeholder-data';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
@@ -216,5 +218,58 @@ export async function fetchFilteredCustomers(query: string) {
   } catch (err) {
     console.error('Database Error:', err);
     throw new Error('Failed to fetch customer table.');
+  }
+}
+
+
+/* INVENTORY */
+
+export async function fetchFilteredInventory(
+  query: string,
+  currentPage: number,
+) {
+  const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+
+  try {
+    const inventory = await sql<InventoryTable[]>`
+      SELECT
+        inventory.id,
+        inventory.sku,
+        inventory.name,
+        inventory.description,
+        inventory.status,
+        inventory.img
+      FROM inventory_items AS inventory
+      WHERE
+        inventory.name ILIKE ${`%${query}%`} OR
+        inventory.description ILIKE ${`%${query}%`} OR
+        inventory.sku ILIKE ${`%${query}%`}
+      ORDER BY inventory.name ASC
+      LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
+    `;
+
+    console.log('Fetched inventory:', inventory);
+    return inventory;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch inventory.');
+  }
+}
+
+export async function fetchInventoryPages(query: string) {
+  try {
+    const data = await sql`SELECT COUNT(*)
+    FROM inventory_items AS inventory
+    WHERE
+      inventory.name ILIKE ${`%${query}%`} OR
+      inventory.description ILIKE ${`%${query}%`} OR
+      inventory.sku ILIKE ${`%${query}%`}
+  `;
+
+    const totalPages = Math.ceil(Number(data[0].count) / ITEMS_PER_PAGE);
+    return totalPages;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch total number of inventory items.');
   }
 }
