@@ -9,5 +9,7 @@
       "extensions": []
     }
   },
+  "postCreateCommand": "npm install -g pnpm; pnpm i",
+  "postStartCommand": "pnpm dev",
   "remoteUser": "root"
 }
